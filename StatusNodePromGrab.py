@@ -1,4 +1,4 @@
-from prometheus_client import start_http_server, Info
+from prometheus_client import start_http_server, Info, Gauge
 import time
 import requests
 
@@ -25,8 +25,7 @@ def parseEndpointData(data):
         'chainspec_name': data['chainspec_name'],
         'starting_state_root_hash': data['starting_state_root_hash'],
         'round_length': data['round_length'],
-        'build_version': data['build_version'],
-        'peercount': str(len(data['peers']))
+        'build_version': data['build_version']
     }
     if data['next_upgrade'] == None:
         parsed['general_info']['next_upgrade_activation_point'] = 'N/A'
@@ -35,16 +34,24 @@ def parseEndpointData(data):
         parsed['general_info']['next_upgrade_activation_point'] = str(data['next_upgrade']['activation_point'])
         parsed['general_info']['next_upgrade_protocol_version'] = data['next_upgrade']['protocol_version']
 
+    parsed['peer_count'] = len(data['peers'])
+    parsed['era_id'] = data['last_added_block_info']['era_id']
+    parsed['height'] = data['last_added_block_info']['height']
+
+    #delete from last_added_block_info as they are now seperated for guages
+    del data['last_added_block_info']['era_id']
+    del data['last_added_block_info']['height']
+
     parsed['last_added_block_info'] = data['last_added_block_info']
-    parsed['last_added_block_info']['era_id'] = str(parsed['last_added_block_info']['era_id'])
-    parsed['last_added_block_info']['height'] = str(parsed['last_added_block_info']['height'])
 
     return parsed
-
 
 #set up info metrics
 gi = Info('general_info', 'General Information')
 labi = Info('last_added_block_info', 'Last added block info')
+pc = Gauge('peer_count', 'Connected Peers')
+eid = Gauge('era_id', 'Era ID')
+h = Gauge('height', 'Block height')
 
 
 #function to  update info metrics
@@ -53,11 +60,15 @@ def infoMetrics():
     parsed_data = parseEndpointData(data)
     gi.info(parsed_data['general_info'])
     labi.info(parsed_data['last_added_block_info'])
+    pc.set(parsed_data['peer_count'])
+    eid.set(parsed_data['era_id'])
+    h.set(parsed_data['height'])
+
 
 
 if __name__ == '__main__':
     # Start up the server to expose the metrics.
-    start_http_server(8000)
+    start_http_server(8123)
     # collect data every x seconds
     while True:
         infoMetrics()
