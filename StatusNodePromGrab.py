@@ -48,12 +48,7 @@ def parseEndpointData(data):
 
 #set up info metrics
 
-api_version = Info('casper_exporter_api_version', 'Casper Node API Version')
-build_version = Info('casper_exporter_build_version', 'Casper Node Build Version')
-chainspec_name = Info('casper_exporter_chainspec_name', 'Casper Node Chainspec Name')
-next_upgrade = Info('casper_exporter_next_upgrade', 'Casper Node Next Upgrade')
-round_length = Info('casper_exporter_round_length', 'Casper node round length')
-ssrh = Info('casper_exporter_starting_state_root_hash', ' Casper Node Starting State Root Hash')
+gi = Info('casper_exporter_general_info', 'General Information')
 labi = Info('casper_exporter_last_added_block_info', 'Casper node last added block info')
 pc = Gauge('casper_exporter_peer_count', 'Casper Node Connected Peers')
 eid = Gauge('casper_exporter_era_id', 'Casper Node Era ID')
@@ -64,14 +59,7 @@ h = Gauge('casper_exporter_height', 'Casper Node Block Height')
 def infoMetrics():
     data = fetchStatusEndpoint(endpoint_url)
     parsed_data = parseEndpointData(data)
-    api_version.info({'api_version': parsed_data['general_info']['api_version']})
-    chainspec_name.info({'chainspec_name': parsed_data['general_info']['chainspec_name']})
-    next_upgrade.info({
-        'next_upgrade_activation_point': parsed_data['general_info']['next_upgrade_activation_point'],
-        'next_upgrade_protocol_version': parsed_data['general_info']['next_upgrade_protocol_version']
-    })
-    round_length.info({'round_length': parsed_data['general_info']['round_length']})
-    ssrh.info({'starting_state_root_hash': parsed_data['general_info']['starting_state_root_hash']})
+    gi.info(parsed_data['general_info'])
     labi.info(parsed_data['last_added_block_info'])
     pc.set(parsed_data['peer_count'])
     eid.set(parsed_data['era_id'])
