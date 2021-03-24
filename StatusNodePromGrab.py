@@ -27,17 +27,20 @@ def parseEndpointData(data):
         'round_length': data['round_length'],
         'build_version': data['build_version']
     }
+    parsed['next_upgrade'] = {}
     if data['next_upgrade'] == None:
-        parsed['general_info']['next_upgrade_activation_point'] = 'N/A'
-        parsed['general_info']['next_upgrade_protocol_version'] = 'N/A'
+        parsed['next_upgrade']['next_upgrade_activation_point'] = 'N/A'
+        parsed['next_upgrade']['next_upgrade_protocol_version'] = 'N/A'
     else:
-        parsed['general_info']['next_upgrade_activation_point'] = str(data['next_upgrade']['activation_point'])
-        parsed['general_info']['next_upgrade_protocol_version'] = data['next_upgrade']['protocol_version']
+        parsed['next_upgrade']['next_upgrade_activation_point'] = str(data['next_upgrade']['activation_point'])
+        parsed['next_upgrade']['next_upgrade_protocol_version'] = data['next_upgrade']['protocol_version']
 
     parsed['peer_count'] = len(data['peers'])
     parsed['era_id'] = data['last_added_block_info']['era_id']
     parsed['height'] = data['last_added_block_info']['height']
-
+    #add timestamp to general info and upgrade
+    parsed['general_info']['timestamp'] = data['last_added_block_info']['timestamp']
+    parsed['next_upgrade']['timestamp'] = data['last_added_block_info']['timestamp']
     #delete from last_added_block_info as they are now seperated for guages
     del data['last_added_block_info']['era_id']
     del data['last_added_block_info']['height']
@@ -49,6 +52,7 @@ def parseEndpointData(data):
 #set up info metrics
 
 gi = Info('casper_exporter_general_info', 'General Information')
+nu = Info('casper_exporter_next_upgrade', 'Information about the next upgrade if available')
 labi = Info('casper_exporter_last_added_block_info', 'Casper node last added block info')
 pc = Gauge('casper_exporter_peer_count', 'Casper Node Connected Peers')
 eid = Gauge('casper_exporter_era_id', 'Casper Node Era ID')
@@ -60,6 +64,7 @@ def infoMetrics():
     data = fetchStatusEndpoint(endpoint_url)
     parsed_data = parseEndpointData(data)
     gi.info(parsed_data['general_info'])
+    nu.info(parsed_data['next_upgrade'])
     labi.info(parsed_data['last_added_block_info'])
     pc.set(parsed_data['peer_count'])
     eid.set(parsed_data['era_id'])
