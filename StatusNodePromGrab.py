@@ -20,6 +20,9 @@ def parseEndpointData(data):
     else:
         data['round_length'] = str(data['round_length'])
     parsed = {}
+    parsed['is_validator'] = 0
+    if data['round_length'] != 'N/A':
+        parsed['is_validator'] = 1
     parsed['general_info'] = {
         'api_version': data['api_version'],
         'chainspec_name': data['chainspec_name'],
@@ -57,6 +60,7 @@ labi = Info('casper_exporter_last_added_block_info', 'Casper node last added blo
 pc = Gauge('casper_exporter_peer_count', 'Casper Node Connected Peers')
 eid = Gauge('casper_exporter_era_id', 'Casper Node Era ID')
 h = Gauge('casper_exporter_height', 'Casper Node Block Height')
+iv = Gauge('casper_exporter_is_validator', 'Is node an active validator?')
 
 
 #function to  update info metrics
@@ -69,6 +73,7 @@ def infoMetrics():
     pc.set(parsed_data['peer_count'])
     eid.set(parsed_data['era_id'])
     h.set(parsed_data['height'])
+    iv.set(parsed_data['is_validator'])
 
 
 
