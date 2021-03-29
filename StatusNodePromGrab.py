@@ -1,6 +1,8 @@
-from prometheus_client import start_http_server, Info, Gauge
+from prometheus_client import start_http_server, Info, Gauge, Histogram
 import time
 import requests
+import datetime
+
 
 #change with your endpoint
 endpoint_url = "http://localhost:8888/status"
@@ -13,6 +15,12 @@ def fetchStatusEndpoint(endpoint_url):
     r = requests.get(endpoint_url)
     return r.json()
 
+def roundLengthSeconds(time_string):
+    date_time = datetime.datetime.strptime(time_string, "%Mm %Ss %fms")
+    a_timedelta = date_time - datetime.datetime(1900, 1, 1)
+    seconds = a_timedelta.total_seconds()
+    return seconds
+
 #function to parse endpoint data into more condensed version
 def parseEndpointData(data):
     if data['round_length'] == None:
@@ -20,9 +28,14 @@ def parseEndpointData(data):
     else:
         data['round_length'] = str(data['round_length'])
     parsed = {}
+
     parsed['is_validator'] = 0
+    parsed['round_length_in_seconds'] = 0
+
     if data['round_length'] != 'N/A':
         parsed['is_validator'] = 1
+        parsed['round_length_in_seconds'] = roundLengthSeconds(data['round_length'])
+
     parsed['general_info'] = {
         'api_version': data['api_version'],
         'chainspec_name': data['chainspec_name'],
@@ -31,12 +44,15 @@ def parseEndpointData(data):
         'build_version': data['build_version']
     }
     parsed['next_upgrade'] = {}
+    parsed['is_upgrade_pending'] = 0
+
     if data['next_upgrade'] == None:
         parsed['next_upgrade']['next_upgrade_activation_point'] = 'N/A'
         parsed['next_upgrade']['next_upgrade_protocol_version'] = 'N/A'
     else:
         parsed['next_upgrade']['next_upgrade_activation_point'] = str(data['next_upgrade']['activation_point'])
         parsed['next_upgrade']['next_upgrade_protocol_version'] = data['next_upgrade']['protocol_version']
+        parsed['is_upgrade_pending'] = 1
 
     parsed['peer_count'] = len(data['peers'])
     parsed['era_id'] = data['last_added_block_info']['era_id']
@@ -61,6 +77,8 @@ pc = Gauge('casper_exporter_peer_count', 'Casper Node Connected Peers')
 eid = Gauge('casper_exporter_era_id', 'Casper Node Era ID')
 h = Gauge('casper_exporter_height', 'Casper Node Block Height')
 iv = Gauge('casper_exporter_is_validator', 'Is node an active validator?')
+up = Gauge('casper_exporter_is_upgrade_pending', 'Is there an upgrade waiting to happen?')
+rls = Gauge('casper_exporter_round_length_in_seconds', 'Round length in seconds and ms (Unix) as gauge')
 
 
 #function to  update info metrics
@@ -74,6 +92,8 @@ def infoMetrics():
     eid.set(parsed_data['era_id'])
     h.set(parsed_data['height'])
     iv.set(parsed_data['is_validator'])
+    up.set(parsed_data['is_upgrade_pending'])
+    rls.set(parsed_data['round_length_in_seconds'])
 
 
 
