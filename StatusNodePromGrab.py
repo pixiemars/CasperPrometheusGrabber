@@ -72,8 +72,15 @@ def parseEndpointData(data):
         parsed['height'] = 0
 
     #add timestamp to general info and upgrade
-    parsed['general_info']['timestamp'] = data['last_added_block_info']['timestamp']
-    parsed['next_upgrade']['timestamp'] = data['last_added_block_info']['timestamp']
+    try:
+        parsed['general_info']['timestamp'] = data['last_added_block_info']['timestamp']
+    except:
+        parsed['general_info']['timestamp'] = 0
+
+    try:
+        parsed['next_upgrade']['timestamp'] = data['last_added_block_info']['timestamp']
+    except:
+        parsed['next_upgrade']['timestamp'] = 0
 
     #delete from last_added_block_info as they are now seperated for guages
     del data['last_added_block_info']['era_id']
