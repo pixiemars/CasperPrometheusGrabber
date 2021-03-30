@@ -5,7 +5,7 @@ import datetime
 import subprocess
 
 #change with your endpoint
-endpoint_url = "http://207.180.200.65:8888/status"
+endpoint_url = "http://localhost:8888/status"
 
 #interval between api calls in seconds, dont set too fast to avoid issues
 interval = 60
