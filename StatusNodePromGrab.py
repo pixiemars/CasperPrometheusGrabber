@@ -2,13 +2,17 @@ from prometheus_client import start_http_server, Info, Gauge, Histogram
 import time
 import requests
 import datetime
-
+import subprocess
 
 #change with your endpoint
 endpoint_url = "http://localhost:8888/status"
 
 #interval between api calls in seconds, dont set too fast to avoid issues
 interval = 60
+
+def getBlockTime(last_block, current_block):
+    last_Block_time = subprocess.run()
+    return True
 
 #function to get data from status endpoint with requests
 def fetchStatusEndpoint(endpoint_url):
@@ -23,17 +27,17 @@ def roundLengthSeconds(time_string):
 
 #function to parse endpoint data into more condensed version
 def parseEndpointData(data):
+    parsed = {}
+    parsed['is_validator'] = 0
     if data['round_length'] == None:
         data['round_length'] = 'N/A'
     else:
         data['round_length'] = str(data['round_length'])
-    parsed = {}
+        parsed['is_validator'] = 1
 
-    parsed['is_validator'] = 0
     parsed['round_length_in_seconds'] = 0
 
     if data['round_length'] != 'N/A':
-        parsed['is_validator'] = 1
         parsed['round_length_in_seconds'] = roundLengthSeconds(data['round_length'])
 
     parsed['general_info'] = {
@@ -43,6 +47,7 @@ def parseEndpointData(data):
         'round_length': data['round_length'],
         'build_version': data['build_version']
     }
+
     parsed['next_upgrade'] = {}
     parsed['is_upgrade_pending'] = 0
 
@@ -55,11 +60,21 @@ def parseEndpointData(data):
         parsed['is_upgrade_pending'] = 1
 
     parsed['peer_count'] = len(data['peers'])
-    parsed['era_id'] = data['last_added_block_info']['era_id']
-    parsed['height'] = data['last_added_block_info']['height']
+
+    try:
+        parsed['era_id'] = data['last_added_block_info']['era_id']
+    except:
+        parsed['era_id'] = 0
+
+    try:
+        parsed['height'] = data['last_added_block_info']['height']
+    except:
+        parsed['height'] = 0
+
     #add timestamp to general info and upgrade
     parsed['general_info']['timestamp'] = data['last_added_block_info']['timestamp']
     parsed['next_upgrade']['timestamp'] = data['last_added_block_info']['timestamp']
+
     #delete from last_added_block_info as they are now seperated for guages
     del data['last_added_block_info']['era_id']
     del data['last_added_block_info']['height']
