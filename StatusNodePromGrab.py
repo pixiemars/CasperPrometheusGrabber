@@ -5,7 +5,7 @@ import datetime
 import subprocess
 
 #change with your endpoint
-endpoint_url = "http://localhost:8888/status"
+endpoint_url = "http://207.180.200.65:8888/status"
 
 #interval between api calls in seconds, dont set too fast to avoid issues
 interval = 60
@@ -85,8 +85,11 @@ def parseEndpointData(data):
         parsed['next_upgrade']['timestamp'] = 0
 
     #delete from last_added_block_info as they are now seperated for guages
-    
-    parsed['last_added_block_info'] = data['last_added_block_info']
+
+    try:
+        parsed['last_added_block_info'] = data['last_added_block_info']
+    except:
+        parsed['last_added_block_info'] = {}
 
     return parsed
 
