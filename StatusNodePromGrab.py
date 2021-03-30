@@ -63,11 +63,13 @@ def parseEndpointData(data):
 
     try:
         parsed['era_id'] = data['last_added_block_info']['era_id']
+        del data['last_added_block_info']['era_id']
     except:
         parsed['era_id'] = 0
 
     try:
         parsed['height'] = data['last_added_block_info']['height']
+        del data['last_added_block_info']['height']
     except:
         parsed['height'] = 0
 
@@ -83,9 +85,7 @@ def parseEndpointData(data):
         parsed['next_upgrade']['timestamp'] = 0
 
     #delete from last_added_block_info as they are now seperated for guages
-    del data['last_added_block_info']['era_id']
-    del data['last_added_block_info']['height']
-
+    
     parsed['last_added_block_info'] = data['last_added_block_info']
 
     return parsed
