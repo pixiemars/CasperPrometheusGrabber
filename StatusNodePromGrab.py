@@ -77,19 +77,25 @@ def parseEndpointData(data):
     try:
         parsed['general_info']['timestamp'] = data['last_added_block_info']['timestamp']
     except:
-        parsed['general_info']['timestamp'] = 0
+        parsed['general_info']['timestamp'] = "1900-01-01T00:00:00.992Z"
 
     try:
         parsed['next_upgrade']['timestamp'] = data['last_added_block_info']['timestamp']
     except:
-        parsed['next_upgrade']['timestamp'] = 0
+        parsed['next_upgrade']['timestamp'] = "1900-01-01T00:00:00.992Z"
 
     #delete from last_added_block_info as they are now seperated for guages
 
     try:
         parsed['last_added_block_info'] = data['last_added_block_info']
     except:
-        parsed['last_added_block_info'] = {}
+        parsed['last_added_block_info'] = {
+            "creator":"",
+            "hash":"",
+            "state_root_hash": "",
+            "timestamp": "1900-01-01T00:00:00.992Z"
+
+        }
 
     return parsed
 
