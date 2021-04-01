@@ -1,14 +1,21 @@
-from prometheus_client import start_http_server, Info, Gauge, Histogram
-import time
+from prometheus_client.twisted import MetricsResource
+from twisted.web.server import Site
+from twisted.web.resource import Resource
+from twisted.internet import task
+from twisted.application import service, internet
+from prometheus_client import Info, Gauge
 import requests
 import datetime
 import subprocess
 
-#change with your endpoint
-endpoint_url = "http://localhost:8888/status"
+#change with your status endpoint
+endpoint_url = "http://207.180.200.65:8888/status"
 
 #interval between api calls in seconds, dont set too fast to avoid issues
 interval = 60
+
+#default port to run on
+default_port = 8123
 
 def getBlockTime(last_block, current_block):
     last_Block_time = subprocess.run()
@@ -73,6 +80,9 @@ def parseEndpointData(data):
     except:
         parsed['height'] = 0
 
+
+    #TODO : add block time code here based on height and height -1
+
     #add timestamp to general info and upgrade
     try:
         parsed['general_info']['timestamp'] = data['last_added_block_info']['timestamp']
@@ -126,13 +136,21 @@ def infoMetrics():
     up.set(parsed_data['is_upgrade_pending'])
     rls.set(parsed_data['round_length_in_seconds'])
 
+reactor_loop = task.LoopingCall(infoMetrics)
+reactor_loop.start(interval)
 
+root = Resource()
+root.putChild(b'', MetricsResource())
+
+factory = Site(root)
+
+# reactor.listenTCP(default_port, factory)
+# reactor.run()
 
 if __name__ == '__main__':
-    # Start up the server to expose the metrics.
-    start_http_server(8123)
-    # collect data every x seconds
-    while True:
-        infoMetrics()
-        #change interval variable for different time intervals
-        time.sleep(interval)
+    from twisted.internet import reactor
+    reactor.listenTCP(default_port, factory)
+    reactor.run()
+else:
+    application = service.Application("casper_exporter_prometheus")
+    internet.TCPServer(default_port, factory).setServiceParent(application)
