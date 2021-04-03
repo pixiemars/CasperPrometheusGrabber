@@ -140,7 +140,7 @@ reactor_loop = task.LoopingCall(infoMetrics)
 reactor_loop.start(interval)
 
 root = Resource()
-root.putChild(b'', MetricsResource())
+root.putChild(b'metrics', MetricsResource())
 
 factory = Site(root)
 
